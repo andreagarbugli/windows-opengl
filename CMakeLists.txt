@@ -1,11 +1,18 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(ProfessionalCmake VERSION 0.1.0)
+cmake_minimum_required(VERSION 3.2)
+project(ProfessionalCmake 
+        VERSION 0.1.0
+        LANGUAGES CXX C
+    )
 
-include(CTest)
-enable_testing()
+find_package(OpenGL REQUIRED)
 
-add_executable(ProfessionalCmake main.cpp)
+add_executable(ProfessionalCmake source/main.cpp)
 
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+target_link_libraries(
+    ProfessionalCmake
+    PRIVATE OpenGL::GL
+)
+
+# In questo modo creo un app Win32 Desktop e che quindi sfrutta
+# WinMain()
+# add_executable(ProfessionalCmake WIN32 source/main.cpp)
