@@ -6,12 +6,7 @@ project(ProfessionalCmake
 
 find_package(OpenGL REQUIRED)
 
-add_executable(ProfessionalCmake source/main.cpp)
-
-target_link_libraries(
-    ProfessionalCmake
-    PRIVATE OpenGL::GL
-)
+add_subdirectory(source)
 
 # In questo modo creo un app Win32 Desktop e che quindi sfrutta
 # WinMain()
