@@ -28,6 +28,13 @@ int main(int, char **)
             glClearColor(1.0, 0.0, 0.0, 1.0);
             glClear(GL_COLOR_BUFFER_BIT);
 
+            glColor3f(1.0f, 0.0f, 1.0f);
+            glBegin(GL_TRIANGLES);
+            glVertex2d(0.5f, -0.5f);
+            glVertex2d(-0.5f, -0.5f);
+            glVertex2d(0.0f, 0.5f);
+            glEnd();
+
             window.swapBuffers();
         }
     }

@@ -90,7 +90,7 @@ bool Window::_createWindowClass(HINSTANCE hInstance)
     WNDCLASSEX wcx{};
     wcx.cbSize = sizeof(wcx);                                             // size of structure
     wcx.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;                       // redraw if size changes
-    wcx.lpfnWndProc = Window::msgRouter;                                  // points to window procedure
+    wcx.lpfnWndProc = Window::msgSetup;                                   // points to window procedure
     wcx.cbClsExtra = 0;                                                   // no extra class memory
     wcx.cbWndExtra = 0;                                                   // no extra window memory
     wcx.hInstance = hInstance;                                            // handle to instance
@@ -109,6 +109,14 @@ LRESULT Window::handleMessages(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 {
     switch (msg)
     {
+    case WM_SIZE:
+    {
+        UINT width = LOWORD(lParam);
+        UINT height = HIWORD(lParam);
+        width_ = width;
+        height_ = height;
+    }
+        return 0;
     case WM_CLOSE:
     {
         wglMakeCurrent(deviceContext_, nullptr);
