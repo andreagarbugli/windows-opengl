@@ -2,9 +2,14 @@
 #define WINDOW_H
 
 #include <Windows.h>
+
 #include <GL/gl.h>
+
 #include <cstdint>
 #include <string>
+
+#include "glext.h"
+#include "wglext.h"
 
 class Window
 {
@@ -18,6 +23,7 @@ private:
     std::string title_;
 
     HWND handle_;
+    HWND fakeHandle_;
 
     HINSTANCE hInstance_;
 

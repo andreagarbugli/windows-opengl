@@ -12,7 +12,7 @@ Window::Window(int32_t width, int32_t height, std::string &title)
     RECT clientRect{0, 0, width_, height_};
     AdjustWindowRect(&clientRect, WS_OVERLAPPEDWINDOW, FALSE);
 
-    handle_ = CreateWindowEx(
+    fakeHandle_ = CreateWindowEx(
         0,
         "MainWClass",        // name of window class
         "Sample",            // title-bar string
@@ -26,14 +26,15 @@ Window::Window(int32_t width, int32_t height, std::string &title)
         hInstance_,          // handle to application instance
         this);
 
-    ShowWindow(handle_, SW_SHOWDEFAULT);
+    // ShowWindow(handle_, SW_SHOWDEFAULT);
 
-    UpdateWindow(handle_);
+    // UpdateWindow(handle_);
 }
 
 Window::~Window()
 {
     UnregisterClass("MainWClass", hInstance_);
+    DestroyWindow(fakeHandle_);
     DestroyWindow(handle_);
 }
 
@@ -49,18 +50,81 @@ void Window::init()
     pfd.cStencilBits = 8;                                                     // Number of bits for the stencilbuffer
     pfd.iLayerType = PFD_MAIN_PLANE;
 
-    deviceContext_ = GetDC(handle_);
+    HDC fakeDeviceContext = GetDC(fakeHandle_);
 
-    int pixelFormatIndex = ChoosePixelFormat(deviceContext_, &pfd);
+    int pixelFormatIndex = ChoosePixelFormat(fakeDeviceContext, &pfd);
 
     PIXELFORMATDESCRIPTOR suggestedPixelFormat = {};
-    DescribePixelFormat(deviceContext_, pixelFormatIndex,
+    DescribePixelFormat(fakeDeviceContext, pixelFormatIndex,
                         sizeof(suggestedPixelFormat), &suggestedPixelFormat);
 
-    SetPixelFormat(deviceContext_, pixelFormatIndex, &suggestedPixelFormat);
+    SetPixelFormat(fakeDeviceContext, pixelFormatIndex, &suggestedPixelFormat);
 
-    renderingContext_ = wglCreateContext(deviceContext_);
+    HGLRC fakeRenderingContext = wglCreateContext(fakeDeviceContext);
+    wglMakeCurrent(fakeDeviceContext, fakeRenderingContext);
+
+    PFNWGLCHOOSEPIXELFORMATEXTPROC wglChoosePixelFormatARB = nullptr;
+    wglChoosePixelFormatARB = reinterpret_cast<PFNWGLCHOOSEPIXELFORMATEXTPROC>(wglGetProcAddress("wglChoosePixelFormatARB"));
+
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
+    wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
+
+    handle_ = CreateWindowEx(
+        0,
+        "MainWClass",        // name of window class
+        "Sample",            // title-bar string
+        WS_OVERLAPPEDWINDOW, // top-level window
+        CW_USEDEFAULT,       // default horizontal position
+        CW_USEDEFAULT,       // default vertical position
+        width_,              // default width
+        height_,             // default height
+        nullptr,             // no owner window
+        nullptr,             // use class menu
+        hInstance_,          // handle to application instance
+        this);
+
+    deviceContext_ = GetDC(handle_);
+
+    const int pixelAttribs[] = {
+        WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+        WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+        WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+        WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+        WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+        WGL_COLOR_BITS_ARB, 32,
+        WGL_ALPHA_BITS_ARB, 8,
+        WGL_DEPTH_BITS_ARB, 24,
+        WGL_STENCIL_BITS_ARB, 8,
+        WGL_SAMPLE_BUFFERS_ARB, GL_TRUE,
+        WGL_SAMPLES_ARB, 4,
+        0};
+
+    int pixelFormatId;
+    UINT numFormats;
+    wglChoosePixelFormatARB(deviceContext_, pixelAttribs, nullptr, 1, &pixelFormatId, &numFormats);
+
+    PIXELFORMATDESCRIPTOR realPfd;
+    DescribePixelFormat(deviceContext_, pixelFormatId, sizeof(realPfd), &realPfd);
+    SetPixelFormat(deviceContext_, pixelFormatId, &realPfd);
+
+    const int majorMin = 4;
+    const int minorMin = 2;
+    int contextAttribs[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, majorMin,
+        WGL_CONTEXT_MINOR_VERSION_ARB, minorMin,
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0};
+
+    renderingContext_ = wglCreateContextAttribsARB(deviceContext_, 0, contextAttribs);
+
+    wglMakeCurrent(nullptr, nullptr);
+    wglDeleteContext(fakeRenderingContext);
+
+    ReleaseDC(fakeHandle_, fakeDeviceContext);
+
     wglMakeCurrent(deviceContext_, renderingContext_);
+
+    ShowWindow(handle_, SW_SHOW);
 }
 
 void Window::swapBuffers()
