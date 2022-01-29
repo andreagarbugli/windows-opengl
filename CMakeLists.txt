@@ -4,6 +4,8 @@ project(ProfessionalCmake
         LANGUAGES CXX C
     )
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+
 find_package(OpenGL REQUIRED)
 
 add_subdirectory(source)
